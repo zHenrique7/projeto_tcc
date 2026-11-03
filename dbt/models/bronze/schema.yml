@@ -1,0 +1,28 @@
+version: 2
+
+# BRONZE: espelhos 1:1 do schema raw (views). Só garantem que o dado bruto chegou com o mínimo esperado.
+models:
+  - name: bronze_noticias
+    description: "Espelho de raw.noticias (coleta Google News + RSS)."
+    columns:
+      - name: titulo
+        data_tests: [not_null]
+      - name: data_publicacao
+        data_tests: [not_null]
+
+  - name: bronze_classificacoes_ia
+    description: "Espelho de raw.classificacoes_ia (resultado da Groq, relevante ou não, e linhas de controle 'dedup')."
+    columns:
+      - name: titulo
+        data_tests: [not_null]
+      - name: relevante
+        data_tests: [not_null]
+
+  - name: bronze_siso_incidentes
+    description: "Espelho de raw.siso_incidentes (CSV da ANP)."
+
+  - name: bronze_dm_instalacao
+    description: "Espelho de raw.dm_ssm_wbs_instalacao (nome e sigla oficiais)."
+
+  - name: bronze_dm_duto
+    description: "Espelho de raw.dm_ssm_wbs_duto (nome oficial dos dutos)."

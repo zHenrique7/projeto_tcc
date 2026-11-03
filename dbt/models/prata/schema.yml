@@ -1,0 +1,61 @@
+version: 2
+
+# PRATA: dado limpo e com regra de negócio aplicada (filtro de notícias, evento único, chaves de comparação do SISO).
+models:
+  - name: prata_noticias_pontuadas
+    description: "Auditoria do pré-filtro: toda notícia ainda não classificada da janela, com pontuação e motivo de admissão/exclusão."
+    columns:
+      - name: titulo
+        data_tests: [not_null]
+      - name: motivo_filtro
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - "admitida"
+                  - "excluida: sem contexto de P&G"
+                  - "excluida: sem sinal de incidente"
+                  - "excluida: pontuacao baixa (ruido, exterior ou sinais fracos)"
+
+  - name: prata_noticias_candidatas
+    description: "Fila de entrada da IA: só as notícias admitidas pelo pré-filtro, da mais provável à menos."
+    columns:
+      - name: titulo
+        data_tests: [not_null]
+      - name: prioridade
+        data_tests: [not_null]
+
+  - name: prata_classificacoes_ia
+    description: "Todas as notícias processadas pela IA (uma por linha), com a regra única de 'mesmo evento'."
+    columns:
+      - name: id_noticia
+        data_tests: [unique, not_null]
+      - name: origem
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["ia", "dedup"]
+      - name: severidade
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["CRÍTICO", "ALTO", "MÉDIO", "INFORMATIVO"]
+      - name: chave_evento
+        data_tests:
+          - not_null:
+              config:
+                where: "relevante"
+
+  - name: prata_siso_incidentes
+    description: "Incidentes do SISO com chaves de comparação limpas (nome da instalação, endereço, data)."
+
+  - name: prata_dm_instalacoes
+    description: "Dimensão unificada de instalações e dutos com nome e sigla limpos."
+
+  - name: prata_instalacao_ia
+    description: "Tradução única da instalação/sonda/poço citado na notícia para o nome oficial da dimensão da ANP (usada pelo cruzamento e pela estrela)."
+    columns:
+      - name: id_noticia
+        data_tests: [unique, not_null]

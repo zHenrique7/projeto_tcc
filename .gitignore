@@ -1,0 +1,27 @@
+# Ambiente Virtual
+venv/
+.venv/
+
+# Variáveis de Ambiente e Segredos (CRÍTICO)
+.env
+*.env
+
+# Arquivos temporários e zips da raiz
+*.zip
+
+# Python & Cache
+__pycache__/
+*.py[cod]
+
+# Prefect
+.prefect/
+*.db
+*.sqlite
+
+# dbt
+dbt/target/
+dbt/dbt_packages/
+dbt/logs/
+
+# VS Code
+.vscode/

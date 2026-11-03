@@ -1,0 +1,208 @@
+version: 2
+
+# OURO: tabelas prontas para consumo (alertas, Power BI, acompanhamento da captura).
+models:
+  - name: incidentes_ia
+    description: "Incidentes operacionais aprovados pela IA, um por evento físico (base dos alertas)."
+    columns:
+      - name: titulo
+        data_tests: [unique, not_null]
+      - name: ia_severidade
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["CRÍTICO", "ALTO", "MÉDIO", "INFORMATIVO"]
+
+  - name: noticias_acidentes_ia
+    description: "Todas as notícias que a IA classificou como acidente/incidente operacional (uma linha por notícia, com sinalização de repetição do mesmo evento). Serve para acompanhar a taxa de captura do agente."
+    columns:
+      - name: id_noticia
+        data_tests: [unique, not_null]
+      - name: titulo
+        data_tests: [not_null]
+      - name: severidade
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["CRÍTICO", "ALTO", "MÉDIO", "INFORMATIVO"]
+      - name: primeira_noticia_do_evento
+        data_tests: [not_null]
+
+  - name: incidentes_cruzados
+    description: "Incidentes da IA cruzados com o SISO/ANP (fonte do Power BI e dos alertas)."
+    columns:
+      - name: titulo
+        data_tests: [unique, not_null]
+      - name: status_cruzamento
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - "Match Perfeito"
+                  - "Match por Substring"
+                  - "Match por Localidade (Fallback)"
+                  - "Nao Comunicado / Sem Correspondencia"
+
+  # ---------------------------------------------------------------------------------------------------------
+  # MODELO ESTRELA: 4 dimensões (data, fonte, localidade, instalação) e 3 fatos. As chaves das dimensões são
+  # números incrementais; a chave 0 é o membro "desconhecido" (dim_data usa 1900-01-01), então nenhuma fato fica
+  # com chave nula. Tipo de evento, severidade e status do cruzamento são colunas de texto nas próprias fatos.
+  # ---------------------------------------------------------------------------------------------------------
+  - name: dim_data
+    description: "Dimensão de datas (2015 até um ano à frente) + membro desconhecido 1900-01-01."
+    columns:
+      - name: chave_data
+        data_tests: [unique, not_null]
+
+  - name: dim_fonte
+    description: "Fontes (feeds) das notícias, com o tipo (Google News ou portal especializado/sindical). Chave 0 = desconhecida."
+    columns:
+      - name: chave_fonte
+        data_tests: [unique, not_null]
+
+  - name: dim_localidade
+    description: "Município + estado extraídos pela IA. Chave 0 = desconhecida."
+    columns:
+      - name: chave_localidade
+        data_tests: [unique, not_null]
+
+  - name: dim_instalacao
+    description: "Instalações e dutos oficiais da ANP + instalações que aparecem só no SISO. Chave 0 = desconhecida."
+    columns:
+      - name: chave_instalacao
+        data_tests: [unique, not_null]
+
+  - name: fato_noticia_ia
+    description: "Fato: uma linha por notícia processada pela IA (relevantes, descartadas e duplicatas de título)."
+    columns:
+      - name: id_noticia
+        data_tests: [unique, not_null]
+      - name: id_incidente
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fato_incidente')
+                field: id_incidente
+      - name: chave_data_publicacao
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_data')
+                field: chave_data
+      - name: chave_data_fato
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_data')
+                field: chave_data
+      - name: chave_fonte
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_fonte')
+                field: chave_fonte
+      - name: chave_localidade
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_localidade')
+                field: chave_localidade
+      - name: chave_instalacao
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_instalacao')
+                field: chave_instalacao
+      - name: severidade
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["CRÍTICO", "ALTO", "MÉDIO", "INFORMATIVO", "Não Informada"]
+
+  - name: fato_incidente
+    description: "Fato: uma linha por incidente (evento físico) aprovado pela IA, já cruzado com o SISO."
+    columns:
+      - name: id_incidente
+        data_tests: [unique, not_null]
+      - name: chave_evento
+        data_tests: [unique, not_null]
+      - name: chave_data_fato
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_data')
+                field: chave_data
+      - name: chave_data_publicacao
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_data')
+                field: chave_data
+      - name: chave_fonte
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_fonte')
+                field: chave_fonte
+      - name: chave_localidade
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_localidade')
+                field: chave_localidade
+      - name: chave_instalacao
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_instalacao')
+                field: chave_instalacao
+      - name: severidade
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["CRÍTICO", "ALTO", "MÉDIO", "INFORMATIVO", "Não Informada"]
+      - name: status_cruzamento
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["Match Perfeito", "Match por Substring", "Match por Localidade (Fallback)", "Nao Comunicado / Sem Correspondencia"]
+
+  - name: fato_siso_incidente
+    description: "Fato: uma linha por incidente comunicado ao SISO/ANP, com indicação de se a IA já o havia detectado nas notícias."
+    columns:
+      - name: num_incidente
+        data_tests:
+          - not_null
+          - unique:
+              config:
+                severity: warn
+      - name: chave_data_primeira_obs
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_data')
+                field: chave_data
+      - name: chave_instalacao
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_instalacao')
+                field: chave_instalacao

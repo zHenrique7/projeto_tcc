@@ -1,0 +1,32 @@
+name: og_monitor
+version: "1.0.0"
+config-version: 2
+profile: dbt_incidentes
+
+model-paths: ["models"]
+macro-paths: ["macros"]
+
+vars:
+  # Janela (em dias) das notícias consideradas pelo pré-filtro; vem do .env (DIAS_RETROATIVOS).
+  dias_retroativos: "{{ env_var('DIAS_RETROATIVOS', '7') | int }}"
+  # Tolerância (em dias) entre a data do fato e a data do incidente no SISO ao cruzar.
+  janela_siso_dias: 14
+
+  # As listas de termos do pré-filtro ficam em macros/termos_pre_filtro.sql (e não aqui).
+
+# Arquitetura medalhão (cada pasta grava no schema de mesmo nome; ver docs/ARQUITETURA.md):
+#   raw    -> escrito pelo Python (coleta, IA, SISO). Não é modelo dbt: entra como "source".
+#   bronze -> views 1:1 do raw, sem regra de negócio.
+#   prata  -> dado limpo + regras de negócio (pré-filtro, evento único, chaves do SISO).
+#   ouro   -> tabelas de consumo (alertas, Power BI, acompanhamento).
+models:
+  og_monitor:
+    bronze:
+      +materialized: view
+      +schema: bronze
+    prata:
+      +materialized: table
+      +schema: prata
+    ouro:
+      +materialized: table
+      +schema: ouro

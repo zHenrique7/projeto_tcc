@@ -1,0 +1,12 @@
+dbt_incidentes:
+  target: prod
+  outputs:
+    prod:
+      type: postgres
+      host: "{{ env_var('OG_DB_HOST', 'localhost') }}"
+      port: "{{ env_var('OG_DB_PORT', '5432') | as_number }}"
+      user: "{{ env_var('OG_DB_USER', 'og_user') }}"
+      password: "{{ env_var('OG_DB_PASSWORD', 'og_password') }}"
+      dbname: "{{ env_var('OG_DB_NAME', 'og_monitor') }}"
+      schema: public
+      threads: 4

@@ -1,0 +1,73 @@
+# Fontes de notícias coletadas pelo pipeline Prefect (equivalem às consultas do Power Query).
+# tipo: google_news -> usa "consulta" (a janela "when:Nd" é acrescentada automaticamente)
+# tipo: rss         -> usa "url" do feed
+# Ajuste/adicione fontes livremente; o campo "nome" vira a coluna "fonte" em raw.noticias.
+#
+# Evite termos soltos e ambíguos nas consultas ("plataforma", "duto", "usina", nomes de estado): o Google casa com
+# sites chamados "Plataforma ...", dutos de ar-condicionado, usinas hidrelétricas etc. Prefira frases entre aspas.
+# Cada consulta do Google News devolve no máximo ~100 itens. Por isso as consultas são curtas e
+# específicas (uma por tipo de ativo/evento): várias consultas pequenas capturam muito mais do que
+# uma consulta grande com muitos operadores AND.
+feeds:
+  # --- Consultas por evento (genéricas) ---
+  - nome: "GNews Incidente"
+    tipo: google_news
+    consulta: 'incidente OR acidente (petróleo OR Petrobras OR "plataforma de petróleo" OR refinaria OR gasoduto OR oleoduto)'
+  - nome: "GNews Vazamento"
+    tipo: google_news
+    consulta: 'vazamento (óleo OR gás OR petróleo OR diesel OR combustível) (refinaria OR oleoduto OR gasoduto OR FPSO OR Petrobras OR Transpetro OR "plataforma de petróleo" OR "bacia de Campos" OR "bacia de Santos")'
+  - nome: "GNews Incêndio"
+    tipo: google_news
+    consulta: '(incêndio OR explosão OR "pegou fogo" OR "pega fogo" OR chamas) (refinaria OR "plataforma de petróleo" OR "plataforma da Petrobras" OR FPSO OR "navio-sonda" OR Petrobras OR petróleo)'
+  - nome: "GNews Offshore"
+    tipo: google_news
+    consulta: 'offshore (acidente OR evacuação OR resgate OR paralisação OR incidente) ("plataforma de petróleo" OR FPSO OR "navio-sonda" OR rebocador OR PSV)'
+  - nome: "GNews Fatalidade"
+    tipo: google_news
+    consulta: '(morte OR óbito OR morre OR morreu OR ferido OR feridos OR petroleiro) ("plataforma de petróleo" OR "plataforma da Petrobras" OR refinaria OR Petrobras OR "petróleo e gás" OR FPSO)'
+  - nome: "GNews ANP"
+    tipo: google_news
+    consulta: 'ANP (interdição OR incidente OR acidente) ("plataforma de petróleo" OR refinaria OR "unidade de produção" OR FPSO)'
+
+  # --- Consultas por ativo (mais amplas: pegam notícias que não usam a palavra "acidente") ---
+  - nome: "GNews Petrobras"
+    tipo: google_news
+    consulta: 'Petrobras (acidente OR incêndio OR explosão OR vazamento OR morre OR ferido OR evacuação OR paralisa)'
+  - nome: "GNews Refinaria"
+    tipo: google_news
+    consulta: 'refinaria (incêndio OR explosão OR vazamento OR acidente OR morre OR ferido OR fumaça OR chamas)'
+  - nome: "GNews Plataforma"
+    tipo: google_news
+    consulta: '("plataforma de petróleo" OR "plataforma da Petrobras" OR FPSO) (incêndio OR acidente OR vazamento OR evacuação OR morte OR ferido)'
+  - nome: "GNews Sonda"
+    tipo: google_news
+    consulta: '("navio-sonda" OR "sonda de perfuração") (acidente OR incidente OR vazamento OR incêndio OR ferido OR paralisada)'
+  - nome: "GNews Dutos"
+    tipo: google_news
+    consulta: '(oleoduto OR gasoduto OR Transpetro) (vazamento OR rompimento OR explosão OR incêndio OR derramamento)'
+  - nome: "GNews Mancha de Óleo"
+    tipo: google_news
+    consulta: '("mancha de óleo" OR "óleo no mar" OR "derramamento de óleo") (Ibama OR Petrobras OR "plataforma de petróleo" OR praia OR litoral)'
+  - nome: "GNews Navegação Offshore"
+    tipo: google_news
+    consulta: '(rebocador OR PSV OR AHTS OR "navio petroleiro" OR "navio de apoio" OR helicóptero) (Petrobras OR "plataforma de petróleo" OR petróleo) (acidente OR incêndio OR colisão OR naufrágio OR queda OR emergência)'
+  - nome: "GNews Parada de Produção"
+    tipo: google_news
+    consulta: '(Petrobras OR "plataforma de petróleo" OR refinaria OR FPSO) ("parada não programada" OR "produção interditada" OR "parada de emergência" OR paralisa OR interditada)'
+  - nome: "GNews Biocombustíveis"
+    tipo: google_news
+    consulta: '("usina de etanol" OR "usina de biodiesel" OR "usina sucroenergética" OR biodiesel) (explosão OR incêndio OR vazamento OR acidente OR morre)'
+  - nome: "GNews Bacias"
+    tipo: google_news
+    consulta: '("bacia de Campos" OR "bacia de Santos" OR "bacia Potiguar" OR "bacia do Espírito Santo" OR "bacia de Sergipe" OR "Foz do Amazonas" OR "pré-sal") (acidente OR incidente OR vazamento OR incêndio OR evacuação OR morte)'
+
+  # --- RSS direto (todo item já é do setor) ---
+  - nome: "Petronotícias"
+    tipo: rss
+    url: "https://petronoticias.com.br/feed/"
+  - nome: "FUP-Nacional"
+    tipo: rss
+    url: "https://fup.org.br/feed/"
+  - nome: "Sindipetro-NF"
+    tipo: rss
+    url: "https://sindipetronf.org.br/feed/"

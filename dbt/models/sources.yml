@@ -1,0 +1,27 @@
+version: 2
+
+sources:
+  - name: raw
+    description: "Tabelas brutas gravadas pelos scripts Python do pipeline (Prefect) (schema raw)."
+    schema: raw
+    tables:
+      - name: noticias
+        description: "Notícias coletadas de Google News e RSS."
+        columns:
+          - name: titulo
+            data_tests: [not_null]
+          - name: data_publicacao
+            data_tests: [not_null]
+      - name: classificacoes_ia
+        description: "Resultado da classificação pela Groq (uma linha por notícia processada, relevante ou não)."
+        columns:
+          - name: titulo
+            data_tests: [not_null]
+      - name: siso_incidentes
+        description: "Incidentes comunicados à ANP (SISO)."
+      - name: dm_ssm_wbs_instalacao
+        description: "Dimensão oficial de instalações (nome e sigla)."
+      - name: dm_ssm_wbs_duto
+        description: "Dimensão oficial de dutos."
+      - name: alertas_enviados
+        description: "Controle de e-mails já enviados."
