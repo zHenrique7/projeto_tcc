@@ -16,7 +16,8 @@ COR_SEVERIDADE = {"CRÍTICO": "#c0392b", "ALTO": "#e67e22", "MÉDIO": "#f1c40f",
 SQL_PENDENTES = """
 SELECT c.*
 FROM ouro.incidentes_cruzados c
-LEFT JOIN raw.alertas_enviados a ON a.chave = md5(c.titulo)
+LEFT JOIN raw.alertas_enviados a
+       ON a.chave IN (md5(c.titulo), COALESCE(c.chave_evento, md5(c.titulo)))
 WHERE a.chave IS NULL
 """
 
@@ -88,9 +89,17 @@ def enviar_alertas() -> int:
         send_email(to=config.ALERTA_DESTINATARIOS, subject=assunto, html_content=corpo)
 
         with conn.cursor() as cur:
+            registros_alerta = []
+            for r in pendentes:
+                registros_alerta.append((r["titulo"], r["titulo"]))
+                if r.get("chave_evento"):
+                    cur.execute(
+                        "INSERT INTO raw.alertas_enviados (chave, titulo) VALUES (%s, %s) ON CONFLICT DO NOTHING",
+                        (r["chave_evento"], r["titulo"]),
+                    )
             cur.executemany(
                 "INSERT INTO raw.alertas_enviados (chave, titulo) VALUES (md5(%s), %s) ON CONFLICT DO NOTHING",
-                [(r["titulo"], r["titulo"]) for r in pendentes],
+                registros_alerta,
             )
     log.info("📧 Alerta enviado com %d incidente(s) para %s", len(pendentes), config.ALERTA_DESTINATARIOS)
     return len(pendentes)

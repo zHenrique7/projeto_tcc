@@ -12,7 +12,6 @@
 -#}
 with base as (
     select
-        md5(c.titulo || '|' || c.data_publicacao::text)                         as chave_evento,
         c.*,
         coalesce(
             c.instalacao_dm_limpa,

@@ -11,6 +11,8 @@ vars:
   dias_retroativos: "{{ env_var('DIAS_RETROATIVOS', '7') | int }}"
   # Tolerância (em dias) entre a data do fato e a data do incidente no SISO ao cruzar.
   janela_siso_dias: 14
+  # Margem futura (em dias) caso a IA infira data_fato ligeiramente anterior à registrada no SISO.
+  tolerancia_siso_futura_dias: 2
 
   # As listas de termos do pré-filtro ficam em macros/termos_pre_filtro.sql (e não aqui).
 

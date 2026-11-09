@@ -6,6 +6,7 @@
   aqui só se escolhe a primeira notícia de cada evento e se formata para consumo (valores ausentes viram 'Não Informado').
 -#}
 select distinct on (c.titulo)
+    c.chave_evento,
     c.data_publicacao,
     c.fonte,
     c.titulo,

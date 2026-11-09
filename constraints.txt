@@ -1,0 +1,3 @@
+# Restrições de versão para compatibilidade entre Prefect 3, dbt e Python 3.10+
+sqlalchemy>=2.0,<2.1
+mashumaro>=3.23

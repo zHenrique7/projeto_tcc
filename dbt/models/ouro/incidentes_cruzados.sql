@@ -10,6 +10,7 @@
   Uma linha por notícia; vence o menor score e, no empate, a data mais próxima do fato.
 -#}
 {% set janela = var('janela_siso_dias') | int %}
+{% set tolerancia_futura = var('tolerancia_siso_futura_dias', 2) | int %}
 
 with ia_base as (
     select
@@ -49,7 +50,7 @@ match_exato as (
         ) as rk
     from ia
     join siso s
-      on s.siso_data between ia.ia_data_conv - {{ janela }} and ia.ia_data_conv
+      on s.siso_data between ia.ia_data_conv - {{ janela }} and ia.ia_data_conv + {{ tolerancia_futura }}
      and ia.ia_chave_busca is not null
      and ia.ia_chave_busca not in ('', 'NAOINFORMADO')
      and ia.ia_chave_busca = s.siso_nome_limpo
@@ -68,7 +69,7 @@ substring_match as (
         'Match por Substring' as status_cruzamento
     from ia
     join siso s
-      on s.siso_data between ia.ia_data_conv - {{ janela }} and ia.ia_data_conv
+      on s.siso_data between ia.ia_data_conv - {{ janela }} and ia.ia_data_conv + {{ tolerancia_futura }}
      and (
             (
                 length(ia.ia_chave_busca) >= 6
@@ -94,7 +95,7 @@ fallback as (
         'Match por Localidade (Fallback)' as status_cruzamento
     from ia
     join siso s
-      on s.siso_data between ia.ia_data_conv - {{ janela }} and ia.ia_data_conv
+      on s.siso_data between ia.ia_data_conv - {{ janela }} and ia.ia_data_conv + {{ tolerancia_futura }}
      and ia.ia_campo_limpo not in ('', 'NAOINFORMADO')
      and s.siso_ende_limpo like '%' || ia.ia_campo_limpo || '%'
     where (ia.ia_chave_busca is null or ia.ia_chave_busca in ('', 'NAOINFORMADO'))
@@ -140,6 +141,7 @@ melhor as (
 )
 
 select
+    ia.chave_evento,
     ia.data_publicacao,
     ia.fonte,
     ia.titulo,

@@ -1,0 +1,18 @@
+# Dependências principais do og-monitor
+# Uso recomendado: pip install -c constraints.txt -r requirements.txt
+sqlalchemy[asyncio]>=2.0,<2.1
+psycopg2-binary>=2.9
+pandas>=2.0
+pyyaml>=6.0
+python-dotenv>=1.0
+feedparser>=6.0
+googlenewsdecoder>=0.2
+newspaper4k>=0.9
+lxml_html_clean>=0.4
+cloudscraper>=1.2
+beautifulsoup4>=4.12
+groq>=1.0
+prefect>=3.0
+dbt-postgres>=1.8
+mashumaro>=3.23
+pytest>=8.0

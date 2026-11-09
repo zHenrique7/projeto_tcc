@@ -63,9 +63,12 @@ repeticoes as (
     join relevantes a
       on a.id_noticia <> b.id_noticia
      and (a.classificado_em, a.titulo) < (b.classificado_em, b.titulo)
-     and a.data_fato is not null
-     and a.data_fato = b.data_fato
-     and coalesce(a.tipo_evento, 'Não Informado') = coalesce(b.tipo_evento, 'Não Informado')
+     and abs(coalesce(a.data_fato, a.data_publicacao::date) - coalesce(b.data_fato, b.data_publicacao::date)) <= 1
+     and (
+            coalesce(a.tipo_evento, 'Não Informado') = coalesce(b.tipo_evento, 'Não Informado')
+         or (a.tipo_evento in ('Incêndio', 'Explosão') and b.tipo_evento in ('Incêndio', 'Explosão'))
+         or (a.tipo_evento in ('Acidente', 'Fatalidade') and b.tipo_evento in ('Acidente', 'Fatalidade'))
+     )
      and (
             (b.instalacao is not null and upper(a.instalacao) = upper(b.instalacao))
          or (b.sonda      is not null and upper(a.sonda)      = upper(b.sonda))

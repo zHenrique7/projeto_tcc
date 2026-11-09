@@ -5,10 +5,44 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "og-monitor"
 version = "1.0.0"
+description = "Monitoramento automatizado de incidentes operacionais de P&G no Brasil (Coleta RSS, dbt, IA Groq e cruzamento SISO/ANP)."
 requires-python = ">=3.10"
+dependencies = [
+    "sqlalchemy[asyncio]>=2.0,<2.1",
+    "psycopg2-binary>=2.9",
+    "pandas>=2.0",
+    "pyyaml>=6.0",
+    "python-dotenv>=1.0",
+    "feedparser>=6.0",
+    "googlenewsdecoder>=0.2",
+    "newspaper4k>=0.9",
+    "lxml_html_clean>=0.4",
+    "cloudscraper>=1.2",
+    "beautifulsoup4>=4.12",
+    "groq>=1.0",
+    "prefect>=3.0",
+    "dbt-postgres>=1.8",
+    "mashumaro>=3.23",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+]
+
+[project.scripts]
+og-pipeline = "og_monitor.pipeline:og_incident_pipeline"
+og-servir = "og_monitor.servir:main"
+og-diagnostico = "og_monitor.diagnostico:main"
+og-reprocessar = "og_monitor.reprocessar:main"
+og-avaliar = "og_monitor.avaliar:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
 og_monitor = ["prompts/*.md"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
