@@ -1,51 +1,7 @@
 version: 2
 
-# OURO: tabelas prontas para consumo (alertas, Power BI, acompanhamento da captura).
+# OURO = só o MODELO ESTRELA (3 fatos + 4 dimensões). Tabelas intermediárias (incidentes_ia, incidentes_cruzados) ficam na prata.
 models:
-  - name: incidentes_ia
-    description: "Incidentes operacionais aprovados pela IA, um por evento físico (base dos alertas)."
-    columns:
-      - name: titulo
-        data_tests: [unique, not_null]
-      - name: ia_severidade
-        data_tests:
-          - not_null
-          - accepted_values:
-              arguments:
-                values: ["CRÍTICO", "ALTO", "MÉDIO", "INFORMATIVO"]
-
-  - name: noticias_acidentes_ia
-    description: "Todas as notícias que a IA classificou como acidente/incidente operacional (uma linha por notícia, com sinalização de repetição do mesmo evento). Serve para acompanhar a taxa de captura do agente."
-    columns:
-      - name: id_noticia
-        data_tests: [unique, not_null]
-      - name: titulo
-        data_tests: [not_null]
-      - name: severidade
-        data_tests:
-          - not_null
-          - accepted_values:
-              arguments:
-                values: ["CRÍTICO", "ALTO", "MÉDIO", "INFORMATIVO"]
-      - name: primeira_noticia_do_evento
-        data_tests: [not_null]
-
-  - name: incidentes_cruzados
-    description: "Incidentes da IA cruzados com o SISO/ANP (fonte do Power BI e dos alertas)."
-    columns:
-      - name: titulo
-        data_tests: [unique, not_null]
-      - name: status_cruzamento
-        data_tests:
-          - not_null
-          - accepted_values:
-              arguments:
-                values:
-                  - "Match Perfeito"
-                  - "Match por Substring"
-                  - "Match por Localidade (Fallback)"
-                  - "Nao Comunicado / Sem Correspondencia"
-
   # ---------------------------------------------------------------------------------------------------------
   # MODELO ESTRELA: 4 dimensões (data, fonte, localidade, instalação) e 3 fatos. As chaves das dimensões são
   # números incrementais; a chave 0 é o membro "desconhecido" (dim_data usa 1900-01-01), então nenhuma fato fica
@@ -64,13 +20,13 @@ models:
         data_tests: [unique, not_null]
 
   - name: dim_localidade
-    description: "Município + estado extraídos pela IA. Chave 0 = desconhecida."
+    description: "Localidade dos incidentes: município+estado (em terra) ou bacia (offshore), já normalizados. Chave 0 = desconhecida."
     columns:
       - name: chave_localidade
         data_tests: [unique, not_null]
 
   - name: dim_instalacao
-    description: "Instalações e dutos oficiais da ANP + instalações que aparecem só no SISO. Chave 0 = desconhecida."
+    description: "Instalações e dutos oficiais da ANP + instalações só do SISO + ativos que só a notícia cita. Chave 0 = desconhecida."
     columns:
       - name: chave_instalacao
         data_tests: [unique, not_null]
@@ -132,8 +88,6 @@ models:
     description: "Fato: uma linha por incidente (evento físico) aprovado pela IA, já cruzado com o SISO."
     columns:
       - name: id_incidente
-        data_tests: [unique, not_null]
-      - name: chave_evento
         data_tests: [unique, not_null]
       - name: chave_data_fato
         data_tests:

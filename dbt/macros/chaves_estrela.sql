@@ -22,6 +22,17 @@ case
 end
 {%- endmacro %}
 
+{#- Chave da localidade do INCIDENTE: município + estado quando há município; sem município (incidente offshore), a
+    bacia normalizada ("bacia:foz do amazonas"), para que as várias grafias da mesma região caiam numa só chave;
+    sem bacia, só o estado. Nulo quando nada foi informado (vira o membro desconhecido, chave 0). -#}
+{% macro chave_localidade_ia(municipio, estado, bacia) -%}
+case
+    when {{ chave_natural(municipio) }} is not null then {{ chave_natural_localidade(municipio, estado) }}
+    when {{ chave_natural(bacia) }} is not null     then 'bacia:' || {{ chave_natural(bacia) }}
+    else {{ chave_natural_localidade(municipio, estado) }}
+end
+{%- endmacro %}
+
 {#- Ordem de gravidade, para ordenar a severidade no Power BI (1 = mais grave; 5 = não informada). -#}
 {% macro severidade_ordem(expr) -%}
 case upper(trim({{ expr }}))

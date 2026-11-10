@@ -1,6 +1,7 @@
-"""Alertas por e-mail (Outlook/SMTP) dos incidentes novos em ouro.incidentes_cruzados."""
+"""Alertas por e-mail (Outlook/SMTP) dos incidentes novos em ouro.fato_incidente (a mesma tabela que o Power BI lê)."""
 import html
 import logging
+from datetime import datetime
 
 from psycopg2.extras import RealDictCursor
 
@@ -15,9 +16,9 @@ COR_SEVERIDADE = {"CRÍTICO": "#c0392b", "ALTO": "#e67e22", "MÉDIO": "#f1c40f",
 
 SQL_PENDENTES = """
 SELECT c.*
-FROM ouro.incidentes_cruzados c
+FROM ouro.fato_incidente c
 LEFT JOIN raw.alertas_enviados a
-       ON a.chave IN (md5(c.titulo), COALESCE(c.chave_evento, md5(c.titulo)))
+       ON a.chave = md5(c.titulo)
 WHERE a.chave IS NULL
 """
 
@@ -27,22 +28,22 @@ def _s(v) -> str:
 
 
 def _linha(r: dict) -> str:
-    cor = COR_SEVERIDADE.get(r["ia_severidade"], "#7f8c8d")
+    cor = COR_SEVERIDADE.get(r["severidade"], "#7f8c8d")
     comunicado = (
-        f"SISO nº {_s(r['num_incidente'])} ({_s(r['nom_instalacao'])})"
-        if r["num_incidente"] else "<b>Sem correspondência no SISO</b>"
+        f"SISO nº {_s(r['num_incidente_siso'])} ({_s(r['instalacao_siso'])})"
+        if r["num_incidente_siso"] else "<b>Sem correspondência no SISO</b>"
     )
-    local = " / ".join(x for x in [r["ia_instalacao"], r["ia_sonda"], r["ia_campo"], r["ia_municipio"], r["ia_estado"]]
+    local = " / ".join(x for x in [r["instalacao"], r["sonda"], r["campo"], r["municipio"], r["estado"]]
                        if x and x != "Não Informado") or "Não informado"
     return f"""
     <tr>
-      <td style="padding:6px;border:1px solid #ddd;background:{cor};color:#fff;font-weight:bold">{_s(r['ia_severidade'])}</td>
+      <td style="padding:6px;border:1px solid #ddd;background:{cor};color:#fff;font-weight:bold">{_s(r['severidade'])}</td>
       <td style="padding:6px;border:1px solid #ddd"><a href="{_s(r['url_noticia'])}">{_s(r['titulo'])}</a><br>
           <small>{_s(r['fonte'])} • publicada em {_s(r['data_publicacao'])}</small></td>
-      <td style="padding:6px;border:1px solid #ddd">{_s(r['ia_tipo_evento'])}<br><small>Fato: {_s(r['ia_data_fato'])} • Vítimas: {_s(r['ia_vitimas'])}</small></td>
-      <td style="padding:6px;border:1px solid #ddd">{_s(local)}<br><small>{_s(r['ia_operadora_contrato'])}</small></td>
+      <td style="padding:6px;border:1px solid #ddd">{_s(r['tipo_evento'])}<br><small>Fato: {_s(r['data_fato'])} • Vítimas: {_s(r['vitimas']) if r['vitimas'] is not None else 'n/i'}</small></td>
+      <td style="padding:6px;border:1px solid #ddd">{_s(local)}<br><small>{_s(r['operadora_contrato'])}</small></td>
       <td style="padding:6px;border:1px solid #ddd">{comunicado}<br><small>{_s(r['status_cruzamento'])}</small></td>
-      <td style="padding:6px;border:1px solid #ddd"><small>{_s(r['ia_motivo'])}</small></td>
+      <td style="padding:6px;border:1px solid #ddd"><small>{_s(r['motivo'])}</small></td>
     </tr>"""
 
 
@@ -54,25 +55,30 @@ def enviar_alertas() -> int:
     with get_conn() as conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(SQL_PENDENTES)
-            pendentes = [r for r in cur.fetchall() if r["ia_severidade"] in config.ALERTA_SEVERIDADES]
+            pendentes = [r for r in cur.fetchall() if r["severidade"] in config.ALERTA_SEVERIDADES]
 
         if not pendentes:
             log.info("🟢 Nenhum incidente novo para alertar.")
             return 0
 
         with conn.cursor() as cur:
-            cur.execute("SELECT count(*) FROM raw.siso_incidentes")
-            linhas_siso = cur.fetchone()[0]
+            cur.execute("SELECT count(*), max(dat_primeira_obs) FROM raw.siso_incidentes")
+            linhas_siso, ultima_siso = cur.fetchone()
 
-        pendentes.sort(key=lambda r: (ORDEM_SEVERIDADE.get(r["ia_severidade"], 9), str(r["ia_data_fato"])))
-        criticos = sum(1 for r in pendentes if r["ia_severidade"] == "CRÍTICO")
-        nao_comunicados = sum(1 for r in pendentes if not r["num_incidente"])
+        pendentes.sort(key=lambda r: (ORDEM_SEVERIDADE.get(r["severidade"], 9), str(r["data_fato"])))
+        criticos = sum(1 for r in pendentes if r["severidade"] == "CRÍTICO")
+        nao_comunicados = sum(1 for r in pendentes if not r["num_incidente_siso"])
 
-        aviso_siso = (
-            f'<p style="color:#c0392b"><b>Atenção:</b> a base do SISO carregada tem só {linhas_siso} linha(s); '
-            "a coluna de cruzamento com o SISO não é confiável.</p>"
-            if linhas_siso < config.SISO_MIN_LINHAS else ""
-        )
+        defasagem = (datetime.now() - ultima_siso).days if ultima_siso else None
+        if linhas_siso < config.SISO_MIN_LINHAS:
+            aviso_siso = (f'<p style="color:#c0392b"><b>Atenção:</b> a base do SISO carregada tem só {linhas_siso} linha(s); '
+                          "a coluna de cruzamento com o SISO não é confiável.</p>")
+        elif defasagem is not None and defasagem > config.SISO_MAX_DEFASAGEM_DIAS:
+            aviso_siso = (f'<p style="color:#c0392b"><b>Atenção:</b> o incidente mais recente do SISO carregado é de '
+                          f"{ultima_siso:%d/%m/%Y} ({defasagem} dias atrás): a coluna de cruzamento com o SISO não é "
+                          "confiável para notícias recentes. Atualize o incidentes.csv.</p>")
+        else:
+            aviso_siso = ""
         corpo = f"""
         <h3>Monitor de Incidentes P&amp;G - {len(pendentes)} novo(s) incidente(s)</h3>
         <p>{criticos} crítico(s) • {nao_comunicados} sem correspondência no SISO.</p>
@@ -89,14 +95,9 @@ def enviar_alertas() -> int:
         send_email(to=config.ALERTA_DESTINATARIOS, subject=assunto, html_content=corpo)
 
         with conn.cursor() as cur:
-            registros_alerta = []
-            for r in pendentes:
-                registros_alerta.append((r["titulo"], r["titulo"]))
-                if r.get("chave_evento"):
-                    cur.execute(
-                        "INSERT INTO raw.alertas_enviados (chave, titulo) VALUES (%s, %s) ON CONFLICT DO NOTHING",
-                        (r["chave_evento"], r["titulo"]),
-                    )
+            # A chave do alerta é o md5 do título do incidente (a notícia-raiz do evento, estável entre execuções).
+            # Alertas antigos gravados com o hash do evento continuam valendo: o md5 do título sempre foi gravado junto.
+            registros_alerta = [(r["titulo"], r["titulo"]) for r in pendentes]
             cur.executemany(
                 "INSERT INTO raw.alertas_enviados (chave, titulo) VALUES (md5(%s), %s) ON CONFLICT DO NOTHING",
                 registros_alerta,

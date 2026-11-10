@@ -153,6 +153,11 @@ def normalizar_resultado(bruto: dict) -> dict:
         except ValueError:
             pass
 
+    # A Foz do Amazonas fica no litoral do Amapá; a IA às vezes devolve "AM" (estado do interior).
+    ref = f"{out.get('campo') or ''} {out.get('instalacao') or ''} {out.get('sonda') or ''}".lower()
+    if out["estado"] == "AM" and re.search(r"foz do amazonas|margem equatorial|fza", ref):
+        out["estado"] = "AP"
+
     if not relevante:  # irrelevantes não carregam campos de extração
         for campo in CAMPOS_TEXTO + ["estado", "vitimas", "data_fato"]:
             out[campo] = None
@@ -165,6 +170,13 @@ def classificar_noticia(system_prompt, pool, titulo, data_publicacao, url, fonte
     if ini == -1 or fim == -1:
         raise ClassificationError(f"Resposta sem JSON: {bruto[:100]}")
     try:
-        return normalizar_resultado(json.loads(bruto[ini:fim + 1]))
+        res = normalizar_resultado(json.loads(bruto[ini:fim + 1]))
     except json.JSONDecodeError as e:
         raise ClassificationError(f"JSON inválido: {str(e)[:100]}") from e
+    # Data do fato no futuro em relação à publicação é erro de extração: melhor nula do que errada
+    # (a data de referência passa a ser a de publicação mais antiga do evento, ver dbt prata_classificacoes_ia).
+    pub = data_publicacao.date() if hasattr(data_publicacao, "date") else data_publicacao
+    if res.get("data_fato") and pub and (res["data_fato"] - pub).days > 1:
+        log.warning("data_fato %s posterior à publicação %s em '%s': descartada.", res["data_fato"], pub, titulo[:60])
+        res["data_fato"] = None
+    return res

@@ -1,7 +1,8 @@
 {{ config(tags=['pos_ia']) }}
 
 {#-
-  OURO: Validador: cruza cada incidente da IA com a base oficial SISO (ANP) em cascata (waterfall),
+  PRATA: Validador intermediário. Só alimenta ouro.fato_incidente, que traz TODAS as colunas desta tabela mais as
+  chaves das dimensões; os alertas por e-mail e o Power BI leem a fato, nunca esta tabela): cruza cada incidente da IA com a base oficial SISO (ANP) em cascata (waterfall),
   sempre na janela [data_fato - janela_siso_dias, data_fato]:
     0 - Match Perfeito              : chave da IA == nome oficial da instalação no SISO
     1 - Match por Substring         : chave (>= 6 caracteres) no início/fim do nome oficial, ou nome oficial no título
@@ -15,13 +16,13 @@
 with ia_base as (
     select
         i.*,
-        coalesce(i.ia_data_fato, i.data_publicacao::date)   as ia_data_conv,
+        coalesce(i.ia_data_fato, i.ia_data_ref, i.data_publicacao::date) as ia_data_conv,
         {{ limpar_e_desacentuar('i.ia_instalacao') }}        as ia_nome_limpo,
         {{ limpar_e_desacentuar('i.ia_sonda') }}             as ia_sonda_limpo,
         {{ limpar_e_desacentuar('i.ia_poco') }}              as ia_poco_limpo,
         {{ limpar_e_desacentuar('i.ia_campo') }}             as ia_campo_limpo,
         {{ limpar_e_desacentuar('i.titulo') }}               as ia_titulo_limpo
-    from {{ ref('incidentes_ia') }} i
+    from {{ ref('prata_incidentes_ia') }} i
 ),
 
 -- Tradução da instalação pela dimensão oficial: feita uma única vez em prata_instalacao_ia
@@ -142,6 +143,8 @@ melhor as (
 
 select
     ia.chave_evento,
+    -- chave numérica do evento (1, 2, 3...) na ordem em que foram classificados; é a que a ouro expõe no lugar do hash
+    row_number() over (order by ia.data_carga, ia.titulo)::int as id_incidente,
     ia.data_publicacao,
     ia.fonte,
     ia.titulo,
@@ -153,6 +156,7 @@ select
     ia.ia_sonda,
     ia.ia_poco,
     ia.ia_campo,
+    ia.ia_bacia,
     ia.ia_municipio,
     ia.ia_estado,
     ia.ia_operadora_contrato,
@@ -161,6 +165,7 @@ select
     ia.ia_data_fato,
     ia.ia_data_conv,
     ia.dm_nome_limpo                                       as instalacao_dm_limpa,
+    ia.ia_chave_busca                                      as instalacao_chave_busca,
     ia.ia_motivo,
     ia.qtd_noticias_do_evento,
     m.num_incidente,

@@ -192,6 +192,10 @@ def classificar_pendentes() -> dict:
 
         duplicadas = len(candidatas) - len(aceitas)
         pendentes = aceitas[: config.MAX_NOTICIAS_POR_EXECUCAO]
+        # A SELEÇÃO é por prioridade (a cota da Groq vai para o que mais parece incidente), mas o PROCESSAMENTO é do mais
+        # antigo para o mais novo: o dbt elege como notícia-raiz do evento a primeira classificada, e num backfill
+        # (DIAS_RETROATIVOS alto) isso fazia uma matéria de opinião recente virar a raiz de um evento de meses atrás.
+        pendentes.sort(key=lambda r: r["data_publicacao"])
         log.info("✂️ %d duplicadas por similaridade | 🤖 %d vão para a IA (limite %d)",
                  duplicadas, len(pendentes), config.MAX_NOTICIAS_POR_EXECUCAO)
 

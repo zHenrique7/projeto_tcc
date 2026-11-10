@@ -16,6 +16,9 @@ FEEDS_PATH = Path(os.environ.get("OG_FEEDS_PATH", PROJECT_ROOT / "config" / "fee
 SISO_DIR = Path(os.environ.get("OG_SISO_DIR", PROJECT_ROOT / "data" / "siso"))
 # Abaixo disso a base do SISO é considerada incompleta (aviso no log e no e-mail de alerta).
 SISO_MIN_LINHAS = int(os.environ.get("SISO_MIN_LINHAS", "50"))
+# Se o incidente mais recente do SISO for mais antigo que isto (em dias), o CSV está desatualizado: o cruzamento não
+# acha nada das notícias recentes (aviso no log e no e-mail de alerta).
+SISO_MAX_DEFASAGEM_DIAS = int(os.environ.get("SISO_MAX_DEFASAGEM_DIAS", "45"))
 
 # --- dbt (roda como subprocesso, em venv próprio) ---
 DBT_BIN = os.environ.get("DBT_BIN", "dbt")

@@ -2,7 +2,7 @@
 
 {#-
   PRATA: incidentes do SISO com as chaves de comparação prontas (maiúsculas, sem acento, só [A-Z0-9]).
-  É o que o cruzamento (ouro.incidentes_cruzados) compara com o que a IA extraiu da notícia.
+  É o que o cruzamento (prata_incidentes_cruzados) compara com o que a IA extraiu da notícia.
 -#}
 select
     num_incidente,

@@ -59,3 +59,31 @@ models:
     columns:
       - name: id_noticia
         data_tests: [unique, not_null]
+
+  - name: prata_incidentes_ia
+    description: "Incidentes operacionais aprovados pela IA, um por evento físico (intermediária da fato_incidente)."
+    columns:
+      - name: titulo
+        data_tests: [unique, not_null]
+      - name: ia_severidade
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["CRÍTICO", "ALTO", "MÉDIO", "INFORMATIVO"]
+
+  - name: prata_incidentes_cruzados
+    description: "Incidentes da IA cruzados com o SISO/ANP (intermediária; alertas e Power BI leem ouro.fato_incidente)."
+    columns:
+      - name: titulo
+        data_tests: [unique, not_null]
+      - name: status_cruzamento
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - "Match Perfeito"
+                  - "Match por Substring"
+                  - "Match por Localidade (Fallback)"
+                  - "Nao Comunicado / Sem Correspondencia"

@@ -11,6 +11,12 @@ vars:
   dias_retroativos: "{{ env_var('DIAS_RETROATIVOS', '7') | int }}"
   # Tolerância (em dias) entre a data do fato e a data do incidente no SISO ao cruzar.
   janela_siso_dias: 14
+  # Regra de "mesmo evento" (ver models/prata/prata_classificacoes_ia.sql). Janelas em dias.
+  janela_evento_ativo_dias: 5       # mesmo ativo
+  janela_evento_bacia_dias: 7       # mesma bacia, um dos lados sem ativo
+  janela_evento_sem_data_dias: 45   # acompanhamento sem data do fato
+  # Bacias com UMA campanha em andamento: sonda, poço e bloco diferentes na mesma bacia são o mesmo incidente.
+  bacias_evento_unico: ["Foz do Amazonas"]
   # Margem futura (em dias) caso a IA infira data_fato ligeiramente anterior à registrada no SISO.
   tolerancia_siso_futura_dias: 2
 

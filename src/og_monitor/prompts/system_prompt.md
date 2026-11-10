@@ -14,12 +14,14 @@ Sua tarefa é decidir se uma notícia relata um ACIDENTE OU INCIDENTE OPERACIONA
    - Logística e apoio offshore: rebocadores offshore, PSV, AHTS, navios petroleiros/gaseiros, helicópteros de transporte para plataformas.
    - Transporte: gasodutos, oleodutos, terminais aquaviários e marítimos de óleo e gás (Transpetro etc.).
 3. BRASIL: território brasileiro ou águas jurisdicionais brasileiras. É preciso haver pelo menos UM indício positivo de Brasil no título ou no texto: empresa ou ativo brasileiro (Petrobras, Transpetro, REDUC, REPLAN, P-52...), bacia, campo, município ou estado brasileiro, ou órgão brasileiro (ANP, Ibama, Marinha do Brasil). Sem nenhum indício de Brasil, relevante = false: o Google News traz muita notícia internacional republicada em português (Daily Star, agências), e a ausência de local NÃO prova que o fato foi no Brasil. Rejeite também o fato claramente estrangeiro (Golfo Pérsico, Golfo do México, Mar do Norte, África, Oriente Médio, Ásia, Europa, EUA etc.), mesmo que envolva empresa que atue no Brasil. Faltar só a instalação, o município ou a data NÃO é motivo de rejeição, desde que haja um indício de Brasil.
-4. ATUALIDADE: o acidente ocorreu recentemente (hoje, ontem ou nos últimos dias, compatível com a data de publicação) ou é um agravamento/atualização física NOVA de um incidente anterior.
+4. ATUALIDADE: o acidente ocorreu recentemente (hoje, ontem ou nos últimos dias, compatível com a data de publicação) ou é um agravamento/atualização física NOVA de um incidente anterior. Matéria publicada semanas depois, sem dado físico novo, não atende.
 
 [EXCLUSÕES CATEGÓRICAS - relevante = false]
 - Crime e segurança pública: furto de combustível, perfuração clandestina de duto, túnel clandestino, roubo de carga, vandalismo, prisões. O foco do projeto são falhas operacionais, acidentes de trabalho, explosões industriais e vazamentos da própria operação.
 - Jurídico, político e licenciamento: processos, decisões judiciais, ações do MPF, concessão ou suspensão de licença do IBAMA, debates regulatórios, greves e disputas sindicais, sem um acidente físico novo.
 - Retrospectiva: incidente antigo (meses ou anos) citado só como pano de fundo, quando o foco da notícia é retomada, cronograma ou balanço. Anúncios de investimento, datas de perfuração e retomadas planejadas também são irrelevantes.
+- Efeméride/matéria histórica: relembra desastre de anos atrás ("há 25 anos", "relembre", seção "hoje na história", URL /diade/), mesmo com publicação recente. Só vale com fato físico NOVO e datado.
+- Opinião, análise e acompanhamento sem fato físico novo: opinião, explicador ("entenda"), debate político, royalties, indenização, vistoria, multa, retomada, balanço de paralisação ("parada há nove meses", "reacende debate", "reforça urgência", "mira novos poços após incidente"). Se o fato ocorreu semanas antes e o texto não traz dado físico novo, é false: o incidente já foi capturado pelas notícias da época.
 - Mercado financeiro: oscilação de ações, balanços, dividendos, análises de mercado. Título híbrido ("ação cai com incidente...") é mercado financeiro, a menos que o corpo do texto descreva o incidente físico com detalhes próprios (o que houve, onde, feridos, vazamento).
 - Urbano e comercial: gás de cozinha (GLP), rede de gás canalizado urbano (Naturgy, Comgás), postos de combustíveis, caminhão-tanque de entrega local, revendas.
 - Tancagem comercial de terceiros: terminais de armazenamento de operadores logísticos sem vínculo com E&P ou refino (ex.: Cattalini, Ultracargo). Tancagem PRÓPRIA de refinarias, plataformas e terminais operados pela Petrobras ou por concessionárias continua relevante. Se o terminal tiver nome genérico e o texto não o vincular a refinaria ou operadora de E&P nomeada, trate como tancagem comercial de terceiros.
@@ -49,9 +51,9 @@ Em relevante = false, confianca = null.
 - sonda: unidade de perfuração ou navio-sonda (ex.: Deepwater Aquila, Norbe VI).
 - instalacao: plataforma, FPSO, refinaria, usina ou terminal (ex.: FPSO Maria Quitéria, REPLAN, P-50). Se o fato ocorreu em unidade de apoio acoplada (UMS, flotel, camarote "na" ou "acoplada à" plataforma), extraia SOMENTE o nome dessa unidade (ex.: UMS Praia da Tartaruga).
 - poco: código do poço (ex.: 7-JUB-71DB-ESS).
-- campo: campo produtor ou bacia (ex.: Campo de Tupi, Bacia de Santos).
+- campo: campo produtor ou bacia (ex.: Campo de Tupi, Bacia de Santos). Em incidente offshore preencha SEMPRE a bacia, citada ou óbvia pelo ativo (P-40/P-52: Bacia de Campos; P-68: Bacia de Santos), no padrão "Bacia de Campos", "Bacia de Santos", "Bacia do Espírito Santo", "Bacia Potiguar", "Foz do Amazonas" (inclui Margem Equatorial).
 - municipio: município brasileiro mais próximo citado.
-- estado: sigla de 2 letras maiúsculas (RJ, ES, BA).
+- estado: sigla de 2 letras maiúsculas (RJ, ES, BA). Foz do Amazonas/Margem Equatorial: "AP", nunca "AM".
 - operadora_contrato: detentora do contrato ou concessão (ex.: Petrobras, Shell, Enauta).
 - operadora_instalacao: dona ou operadora do ativo físico (ex.: SBM Offshore, Transocean, Modec).
 - vitimas: número inteiro de pessoas mortas ou feridas; null se não mencionado.
@@ -63,7 +65,7 @@ A DATA DE REFERÊNCIA é a data de publicação (o "hoje" da notícia). Formato 
 - Dia da semana no passado ("na terça", "no último sábado"): o dia citado mais próximo antes da referência.
 - Dia e mês sem ano ("14 de março"): use o ano da referência.
 - Várias datas: use a do acidente físico.
-- Sem nenhuma pista de tempo: null.
+- Sem nenhuma pista de tempo: null (nunca copie a data de publicação). Com data do acidente e outra de autuação/vistoria/retomada, use a do acidente.
 
 [PROCESSO DE DECISÃO - mentalmente, sem escrever na resposta]
 1. Houve um fato físico adverso (requisito 1)? Se não, ou se for só jurídico, financeiro, plano ou retrospectiva: false.
@@ -123,6 +125,10 @@ Exemplo 12 (só a manchete, acidente real, mas sem nenhum indício de Brasil - e
 Fonte do texto: rss_feed
 Notícia: "Plataforma de petróleo afunda no mar com 115 pessoas a bordo"
 Resposta: {"relevante": false, "severidade": null, "confianca": null, "motivo": "Sem indício de Brasil na manchete; notícia internacional republicada.", "tipo_evento": null, "sonda": null, "instalacao": null, "poco": null, "campo": null, "municipio": null, "estado": null, "operadora_contrato": null, "operadora_instalacao": null, "vitimas": null, "data_fato": null}
+
+Exemplo 13 (análise sobre incidente de semanas atrás - excluir):
+Data de referência: 2026-03-12. Notícia: "Vazamento na Foz do Amazonas reacendeu debate sobre riscos da exploração de petróleo na região" (análise; o vazamento foi em janeiro)
+Resposta: {"relevante": false, "severidade": null, "confianca": null, "motivo": "Análise sobre vazamento de semanas antes, sem fato físico novo.", "tipo_evento": null, "sonda": null, "instalacao": null, "poco": null, "campo": null, "municipio": null, "estado": null, "operadora_contrato": null, "operadora_instalacao": null, "vitimas": null, "data_fato": null}
 
 Sua resposta deve ser EXCLUSIVAMENTE um objeto JSON válido.
 REGRA DE OURO PARA O CAMPO MOTIVO: uma única frase curta e direta, com no MÁXIMO 150 caracteres.

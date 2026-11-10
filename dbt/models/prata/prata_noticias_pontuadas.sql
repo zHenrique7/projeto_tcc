@@ -17,6 +17,8 @@ with base as (
         {{ normalizar_texto("substring(n.titulo from '\s+[-|–—]\s+([^-|–—]{2,60})$')") }} as t_portal
     from {{ ref('bronze_noticias') }} n
     where n.data_publicacao >= current_date - {{ var('dias_retroativos', 7) | int }}
+      -- seções de efeméride ("Hoje na História") republicam desastres antigos com data recente
+      and coalesce(n.url_noticia, '') !~* '/(diade|hoje-na-historia|efemerides?)(/|$)'
       and not exists (
             select 1 from {{ ref('bronze_classificacoes_ia') }} c where c.titulo = n.titulo
       )
