@@ -36,6 +36,7 @@
     município/estado   : do mesmo registro (o primeiro que informa município), com a UF corrigida pela bacia.
 
   origem = 'dedup' marca as linhas de controle gravadas pelo Python para duplicatas de título (nunca foram à IA).
+  origem = 'data_inconsistente' marca matérias antigas que o feed datou como novas (descartadas pelo Python pela data da URL, sem IA).
   leu_materia_completa = false quando a IA só teve a manchete/resumo do RSS (captura menos confiável).
 -#}
 {% set janela_ativo       = var('janela_evento_ativo_dias', 5) | int %}
@@ -51,8 +52,8 @@ with recursive noticias as (
         n.fonte,
         c.url_noticia,
         c.fonte_texto,
-        case when c.fonte_texto = 'dedup' then 'dedup' else 'ia' end  as origem,
-        (c.fonte_texto not in ('rss_feed', 'dedup'))                  as leu_materia_completa,
+        case when c.fonte_texto in ('dedup', 'data_inconsistente') then c.fonte_texto else 'ia' end as origem,
+        (c.fonte_texto not in ('rss_feed', 'dedup', 'data_inconsistente')) as leu_materia_completa,
         c.relevante,
         c.severidade,
         case when c.relevante then coalesce(c.confianca, 'não avaliada') end as confianca,

@@ -1,18 +1,6 @@
 {{ config(tags=['pos_ia']) }}
 
-{#-
-  OURO / ESTRELA - ÚNICA FATO. Grão: uma linha por INCIDENTE (evento físico) detectado pela IA nas notícias, já cruzado
-  com o SISO quando houve correspondência (num_incidente_siso nulo = não encontrado no SISO). O SISO não entra como
-  linhas: só como atributos do cruzamento (número, empresa, instalação e data do incidente SISO encontrado).
-  Datas: data_fato, data_publicacao e data_siso são DATAS (colunas legíveis); a ligação com dim_data é pelo id sequencial
-  id_data_fato / id_data_publicacao / id_data_siso (3 papéis; 0 = sem data). Data do fato = a mais antiga informada pelas
-  notícias do evento; sem ela, a publicação mais antiga.
-  Instalação (dim_instalacao, 2 papéis): id_instalacao (onde ocorreu: tradução oficial > SISO > texto da IA) e
-  id_instalacao_siso (instalação do incidente SISO cruzado). Empresas (dim_empresa, 3 papéis): contrato, instalação, SISO.
-  Fonte, local, tipo, severidade e status ficam nas dimensões. Medidas: qtd_incidente, vitimas, qtd_noticias_do_evento,
-  confianca, score_cruzamento. Degenerados: id_incidente, num_incidente_siso, título, url, motivo, sonda, poço, campo e, para conferir o cruzamento,
-  data_primeira_obs_siso (data e hora), instalacao_siso, endereco_instalacao_siso e descricao_incidente_siso do incidente SISO encontrado.
--#}
+
 with base as (
     select
         c.*,

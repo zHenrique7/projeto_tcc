@@ -3,11 +3,13 @@
 Cada notícia é gravada logo após ser classificada: se a execução for interrompida, nada se perde
 e o que já foi processado não volta para a IA (a próxima rodada do dbt exclui os títulos já gravados).
 """
+import calendar
 import logging
 import re
 import time
 import unicodedata
 from collections import Counter
+from datetime import date, timedelta
 from difflib import SequenceMatcher
 
 from psycopg2.extras import RealDictCursor
@@ -143,6 +145,32 @@ def similaridade(a, b) -> float:
     return sm.ratio()
 
 
+# Matéria antiga com data errada no feed (o Google News reindexa páginas velhas): se a URL real traz ano/mês/dia
+# (/2019/, /2025/11/19/) e esse período termina mais de TOLERANCIA_DATA_URL_DIAS antes da data do feed, o texto não é
+# a notícia nova que o feed anuncia. Descartamos sem raspar e sem gastar IA (nenhuma chamada à Groq).
+TOLERANCIA_DATA_URL_DIAS = 60
+_RE_DATA_URL = re.compile(r"/((?:19|20)\d{2})(?:/(0?[1-9]|1[0-2]))?(?:/(0?[1-9]|[12]\d|3[01]))?(?=[/?#]|$)")
+
+
+def data_maxima_na_url(url: str):
+    """Última data compatível com o ano/mês/dia que aparece no caminho da URL (None se a URL não traz data)."""
+    m = _RE_DATA_URL.search(url or "")
+    if not m:
+        return None
+    ano, mes, dia = int(m.group(1)), m.group(2), m.group(3)
+    mes = int(mes) if mes else 12
+    ultimo = calendar.monthrange(ano, mes)[1]
+    return date(ano, mes, min(int(dia), ultimo) if dia else ultimo)
+
+
+def materia_antiga(url: str, data_publicacao) -> bool:
+    limite = data_maxima_na_url(url)
+    if limite is None:
+        return False
+    pub = data_publicacao.date() if hasattr(data_publicacao, "date") else data_publicacao
+    return limite + timedelta(days=TOLERANCIA_DATA_URL_DIAS) < pub
+
+
 def _gravar(conn, registro: dict) -> None:
     with conn.cursor() as cur:
         cur.execute(INSERT_SQL, registro)
@@ -199,11 +227,22 @@ def classificar_pendentes() -> dict:
         log.info("✂️ %d duplicadas por similaridade | 🤖 %d vão para a IA (limite %d)",
                  duplicadas, len(pendentes), config.MAX_NOTICIAS_POR_EXECUCAO)
 
-        ok = falhas = relevantes = 0
+        ok = falhas = relevantes = antigas = 0
         fontes_texto = Counter()  # como o texto foi obtido: newspaper4k, beautifulsoup_cloudflare ou rss_feed (só manchete)
         for i, row in enumerate(pendentes, 1):
             try:
                 url_real = resolver_url(row["url_noticia"], row["resumo_html"])
+                if materia_antiga(url_real, row["data_publicacao"]):
+                    limite = data_maxima_na_url(url_real)
+                    _gravar(conn, {
+                        **CAMPOS_VAZIOS, "titulo": row["titulo"], "data_publicacao": row["data_publicacao"],
+                        "url_noticia": url_real, "fonte_texto": "data_inconsistente", "relevante": False,
+                        "motivo": f"Matéria antiga: a URL indica {limite.year}, mas o feed a datou de {row['data_publicacao']:%d/%m/%Y}.",
+                    })
+                    antigas += 1
+                    log.info("[%03d/%d] 🕰️ matéria antiga ignorada (URL de %d, feed de %s): %s",
+                             i, len(pendentes), limite.year, f"{row['data_publicacao']:%d/%m/%Y}", row["titulo"])
+                    continue  # sem raspar, sem IA e sem pausa (nenhuma chamada à Groq)
                 texto, fonte_texto = obter_texto(url_real, row["resumo_html"])
                 res = classificar_noticia(
                     system_prompt, pool, row["titulo"], row["data_publicacao"], url_real, fonte_texto, texto
@@ -231,7 +270,7 @@ def classificar_pendentes() -> dict:
             time.sleep(config.GROQ_SLEEP_SECONDS)
 
     resumo = {"candidatas": len(candidatas), "duplicadas": duplicadas, "classificadas": ok,
-              "relevantes": relevantes, "falhas": falhas, "fontes_texto": dict(fontes_texto)}
+              "relevantes": relevantes, "falhas": falhas, "antigas": antigas, "fontes_texto": dict(fontes_texto)}
     log.info("📊 RESULTADO: %s", resumo)
     _publicar_tabela(registros, lista_falhas, resumo)
     if pendentes and falhas == len(pendentes):
