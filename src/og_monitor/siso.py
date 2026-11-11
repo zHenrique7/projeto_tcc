@@ -4,8 +4,8 @@ Os arquivos ficam em OG_SISO_DIR. Aceita UTF-8 (com ou sem BOM) ou Latin-1/Windo
 vem em Latin-1), separador ; , tab ou |, e nomes de coluna com ou sem acento, maiúsculos ou minúsculos.
 
   incidentes.csv        exportação da ANP (Numero, Empresa, Instalacao, Data_da_primeira_observacao,
-                        Hora_da_primeira_observacao, Endereco...) ou o formato simples
-                        (NUM_INCIDENTE, DSC_EMPRESA, NOM_INSTALACAO, DAT_PRIMEIRA_OBS, DSC_ENDE_INSTALACAO)
+                        Hora_da_primeira_observacao, Endereco, Breve_Descricao_Incidente...) ou o formato simples
+                        (NUM_INCIDENTE, DSC_EMPRESA, NOM_INSTALACAO, DAT_PRIMEIRA_OBS, DSC_ENDE_INSTALACAO, DSC_INCIDENTE)
   dm_instalacao.csv     NOM_IDENTIFICACAO, SIG_INSTALACAO
   dados-abertos-plataformas-operacao.csv   (opcional) [NOME DA INSTALAÇÃO], [SIGLA DA INSTALAÇÃO]: as plataformas em
                         operação (dados abertos da ANP) são SOMADAS a dm_instalacao.csv
@@ -34,6 +34,7 @@ ALIASES = {
     "nom_instalacao": ["nom_instalacao", "instalacao"],
     "dat_primeira_obs": ["dat_primeira_obs", "data_da_primeira_observacao"],
     "dsc_ende_instalacao": ["dsc_ende_instalacao", "endereco"],
+    "dsc_incidente": ["dsc_incidente", "breve_descricao_incidente"],
     "nom_identificacao": ["nom_identificacao", "nome_da_instalacao"],
     "sig_instalacao": ["sig_instalacao", "sigla_da_instalacao"],
 }
@@ -43,7 +44,7 @@ COLUNA_HORA = {"dat_primeira_obs": "hora_da_primeira_observacao"}
 # (tabela, arquivos que alimentam a tabela, colunas)
 ARQUIVOS = [
     ("siso_incidentes", ["incidentes.csv"],
-     ["num_incidente", "dsc_empresa", "nom_instalacao", "dat_primeira_obs", "dsc_ende_instalacao"]),
+     ["num_incidente", "dsc_empresa", "nom_instalacao", "dat_primeira_obs", "dsc_ende_instalacao", "dsc_incidente"]),
     ("dm_ssm_wbs_instalacao", ["dm_instalacao.csv", "dados-abertos-plataformas-operacao.csv"],
      ["nom_identificacao", "sig_instalacao"]),
     ("dm_ssm_wbs_duto", ["dm_duto.csv"], ["nom_instalacao"]),

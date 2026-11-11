@@ -1,4 +1,4 @@
-"""Alertas por e-mail (Outlook/SMTP) dos incidentes novos em ouro.fato_incidente (a mesma tabela que o Power BI lê)."""
+"""Alertas por e-mail (Outlook/SMTP) dos incidentes novos em ouro.fato_incidente (a mesma fato que o Power BI lê, com as dimensões)."""
 import html
 import logging
 from datetime import datetime
@@ -15,10 +15,37 @@ ORDEM_SEVERIDADE = {"CRÍTICO": 0, "ALTO": 1, "MÉDIO": 2, "INFORMATIVO": 3}
 COR_SEVERIDADE = {"CRÍTICO": "#c0392b", "ALTO": "#e67e22", "MÉDIO": "#f1c40f", "INFORMATIVO": "#2980b9"}
 
 SQL_PENDENTES = """
-SELECT c.*
-FROM ouro.fato_incidente c
+SELECT
+    f.id_incidente,
+    f.titulo,
+    f.url_noticia,
+    f.motivo,
+    f.sonda,
+    f.campo,
+    f.vitimas,
+    f.num_incidente_siso,
+    f.data_publicacao,
+    f.data_fato,
+    fo.fonte,
+    sv.severidade,
+    te.tipo_evento,
+    st.status_cruzamento,
+    NULLIF(i.instalacao, 'Não Informada')         AS instalacao,
+    NULLIF(isiso.instalacao, 'Não Informada')     AS instalacao_siso,
+    l.municipio,
+    l.estado,
+    NULLIF(ec.empresa, 'Não Informada')           AS operadora_contrato
+FROM ouro.fato_incidente f
+JOIN ouro.dim_status_cruzamento st ON st.id_status_cruzamento = f.id_status_cruzamento
+JOIN ouro.dim_severidade sv        ON sv.id_severidade = f.id_severidade
+JOIN ouro.dim_tipo_evento te       ON te.id_tipo_evento = f.id_tipo_evento
+JOIN ouro.dim_fonte fo             ON fo.id_fonte = f.id_fonte
+JOIN ouro.dim_localidade l         ON l.id_localidade = f.id_localidade
+JOIN ouro.dim_instalacao i         ON i.id_instalacao = f.id_instalacao
+JOIN ouro.dim_instalacao isiso     ON isiso.id_instalacao = f.id_instalacao_siso
+JOIN ouro.dim_empresa ec           ON ec.id_empresa = f.id_empresa_contrato
 LEFT JOIN raw.alertas_enviados a
-       ON a.chave = md5(c.titulo)
+       ON a.chave = md5(f.titulo)
 WHERE a.chave IS NULL
 """
 

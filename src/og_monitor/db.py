@@ -98,9 +98,12 @@ DDL_SCHEMA = [
         dsc_empresa         text,
         nom_instalacao      text,
         dat_primeira_obs    timestamp,
-        dsc_ende_instalacao text
+        dsc_ende_instalacao text,
+        dsc_incidente       text
     )
     """,
+    # bancos criados antes da descrição do incidente: acrescenta a coluna (não faz nada se já existe)
+    "ALTER TABLE raw.siso_incidentes ADD COLUMN IF NOT EXISTS dsc_incidente text",
     "CREATE TABLE IF NOT EXISTS raw.dm_ssm_wbs_instalacao (nom_identificacao text, sig_instalacao text)",
     "CREATE TABLE IF NOT EXISTS raw.dm_ssm_wbs_duto (nom_instalacao text)",
 ]

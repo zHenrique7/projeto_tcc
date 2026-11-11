@@ -1,7 +1,7 @@
 {#-
   Macros do modelo estrela (camada ouro).
 
-  Chaves: cada dimensão (exceto dim_data, que usa a própria data) tem uma chave numérica incremental (1, 2, 3...), gerada
+  Chaves: cada dimensão tem uma chave inteira id_<dimensão> (sequencial: 1, 2, 3...), gerada
   na reconstrução da tabela. Como dimensões e fatos são reconstruídos juntos a cada execução do dbt, as chaves sempre
   batem entre si. A chave 0 é o membro "desconhecido": quando a notícia não permite identificar a fonte, o local ou a
   instalação, a linha de fato aponta para 0 em vez de ficar com chave nula.
@@ -37,13 +37,5 @@ end
 {% macro severidade_ordem(expr) -%}
 case upper(trim({{ expr }}))
     when 'CRÍTICO' then 1 when 'ALTO' then 2 when 'MÉDIO' then 3 when 'INFORMATIVO' then 4 else 5
-end
-{%- endmacro %}
-
-{#- Datas fora do intervalo de dim_data (ou nulas) caem no membro desconhecido 1900-01-01. -#}
-{% macro chave_data(expr) -%}
-case
-    when cast({{ expr }} as date) between date '2015-01-01' and current_date + 365 then cast({{ expr }} as date)
-    else date '1900-01-01'
 end
 {%- endmacro %}

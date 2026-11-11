@@ -43,7 +43,7 @@ siso as (
 -- Camada 1: match exato
 match_exato as (
     select
-        ia.titulo, s.num_incidente, s.dsc_empresa, s.nom_instalacao, s.dat_primeira_obs,
+        ia.titulo, s.num_incidente, s.dsc_empresa, s.nom_instalacao, s.dsc_ende_instalacao, s.dsc_incidente, s.dat_primeira_obs,
         0 as score_distancia,
         'Match Perfeito' as status_cruzamento,
         row_number() over (
@@ -58,14 +58,14 @@ match_exato as (
 ),
 
 exato as (
-    select titulo, num_incidente, dsc_empresa, nom_instalacao, dat_primeira_obs, score_distancia, status_cruzamento
+    select titulo, num_incidente, dsc_empresa, nom_instalacao, dsc_ende_instalacao, dsc_incidente, dat_primeira_obs, score_distancia, status_cruzamento
     from match_exato where rk = 1
 ),
 
 -- Camada 2: substring / sigla (blindada contra falsos positivos)
 substring_match as (
     select
-        ia.titulo, s.num_incidente, s.dsc_empresa, s.nom_instalacao, s.dat_primeira_obs,
+        ia.titulo, s.num_incidente, s.dsc_empresa, s.nom_instalacao, s.dsc_ende_instalacao, s.dsc_incidente, s.dat_primeira_obs,
         1 as score_distancia,
         'Match por Substring' as status_cruzamento
     from ia
@@ -91,7 +91,7 @@ substring_match as (
 -- Camada 3: localidade / campo (somente quando a IA não identificou a instalação)
 fallback as (
     select
-        ia.titulo, s.num_incidente, s.dsc_empresa, s.nom_instalacao, s.dat_primeira_obs,
+        ia.titulo, s.num_incidente, s.dsc_empresa, s.nom_instalacao, s.dsc_ende_instalacao, s.dsc_incidente, s.dat_primeira_obs,
         5 as score_distancia,
         'Match por Localidade (Fallback)' as status_cruzamento
     from ia
@@ -111,6 +111,8 @@ sem_match as (
         null::text      as num_incidente,
         null::text      as dsc_empresa,
         null::text      as nom_instalacao,
+        null::text      as dsc_ende_instalacao,
+        null::text      as dsc_incidente,
         null::timestamp as dat_primeira_obs,
         999             as score_distancia,
         'Nao Comunicado / Sem Correspondencia' as status_cruzamento
@@ -171,6 +173,8 @@ select
     m.num_incidente,
     m.dsc_empresa,
     m.nom_instalacao,
+    m.dsc_ende_instalacao,
+    m.dsc_incidente,
     m.dat_primeira_obs,
     m.score_distancia,
     m.status_cruzamento,

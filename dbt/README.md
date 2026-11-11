@@ -32,11 +32,21 @@ Obs.: a notícia-raiz do evento é a primeira CLASSIFICADA (mantém estáveis os
 
 ## Modelo estrela (schema ouro) e tabelas intermediárias
 
-O schema `ouro` tem SÓ o modelo estrela, para o Power BI: **3 fatos** (`fato_incidente`: um por evento físico, completa;
-`fato_noticia_ia`: uma por notícia processada, com o texto extraído; `fato_siso_incidente`: um por incidente do SISO) e
-**4 dimensões** (`dim_data`, `dim_fonte`, `dim_localidade`, `dim_instalacao`). Relacionamentos no Power BI: sempre
-fato -> dimensão, um-para-muitos, direção única; nunca fato -> fato. `dim_data` liga por `chave_data_fato` (ativa) e por
-`chave_data_publicacao` / `chave_data_primeira_obs` (inativas, usadas com USERELATIONSHIP).
-`prata_incidentes_ia` e `prata_incidentes_cruzados` (antigas `incidentes_ia` e `incidentes_cruzados`) viraram
-intermediárias na prata: só alimentam a `fato_incidente`, que mantém todas as colunas delas. Os alertas por e-mail (`alerts.py`) e o Power BI leem `ouro.fato_incidente`. A antiga
-`noticias_acidentes_ia` foi absorvida por `fato_noticia_ia` (filtre `relevante = true`).
+O schema `ouro` tem SÓ o modelo estrela, para o Power BI: **1 fato** e **8 dimensões**.
+
+`fato_incidente` tem o grão "um incidente detectado pela IA nas notícias", já cruzado com o SISO quando houve
+correspondência (`num_incidente_siso` nulo = não encontrado). O SISO não entra como linhas, só como atributos do cruzamento.
+Traz chaves, datas de verdade (`data_fato`, `data_publicacao`, `data_siso`), medidas (`qtd_incidente`, `vitimas`,
+`qtd_noticias_do_evento`, `confianca`, `score_cruzamento`) e atributos degenerados (`id_incidente`, título, url, motivo,
+sonda, poço, campo).
+
+Todas as chaves são inteiros sequenciais `id_*` (0 = desconhecido). A ligação com datas é por `id_data_fato`,
+`id_data_publicacao` e `id_data_siso`, não pela data. Dimensões: `dim_data` (3 papéis; coluna `data` para marcar como
+tabela de datas), `dim_fonte`, `dim_localidade`, `dim_instalacao` (2 papéis: onde ocorreu e instalação do SISO),
+`dim_empresa` (3 papéis: operadora do contrato, da instalação, empresa do SISO), `dim_tipo_evento`, `dim_severidade` e
+`dim_status_cruzamento`. No Power BI: fato -> dimensão, um-para-muitos, direção única; uma relação ativa por dimensão e as
+demais inativas (USERELATIONSHIP).
+
+Fora da estrela: `prata_noticias_processadas` (uma linha por notícia processada, para acompanhar a captura) e
+`prata_incidentes_ia` / `prata_incidentes_cruzados`, que alimentam a fato. Os alertas por e-mail (`alerts.py`) leem a
+`fato_incidente` juntando as dimensões.

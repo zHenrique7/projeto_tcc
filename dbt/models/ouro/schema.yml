@@ -1,162 +1,155 @@
 version: 2
 
-# OURO = só o MODELO ESTRELA (3 fatos + 4 dimensões). Tabelas intermediárias (incidentes_ia, incidentes_cruzados) ficam na prata.
+# OURO = MODELO ESTRELA com UMA fato (fato_incidente: incidentes detectados pela IA) e 8 dimensões. Todas as chaves são
+# inteiros sequenciais id_*; 0 = membro "desconhecido" (sem chave nula na fato). Papéis: dim_data x3, dim_instalacao x2,
+# dim_empresa x3 (no Power BI, uma relação ativa por dimensão e as demais inativas, com USERELATIONSHIP).
+# Notícias processadas ficam fora da estrela: prata_noticias_processadas.
 models:
-  # ---------------------------------------------------------------------------------------------------------
-  # MODELO ESTRELA: 4 dimensões (data, fonte, localidade, instalação) e 3 fatos. As chaves das dimensões são
-  # números incrementais; a chave 0 é o membro "desconhecido" (dim_data usa 1900-01-01), então nenhuma fato fica
-  # com chave nula. Tipo de evento, severidade e status do cruzamento são colunas de texto nas próprias fatos.
-  # ---------------------------------------------------------------------------------------------------------
   - name: dim_data
-    description: "Dimensão de datas (2015 até um ano à frente) + membro desconhecido 1900-01-01."
+    description: "Datas (2015 até um ano à frente) + membro desconhecido (id 0 = 1900-01-01). id_data é sequencial; `data` é a data."
     columns:
-      - name: chave_data
+      - name: id_data
         data_tests: [unique, not_null]
 
   - name: dim_fonte
-    description: "Fontes (feeds) das notícias, com o tipo (Google News ou portal especializado/sindical). Chave 0 = desconhecida."
+    description: "Fontes das notícias (Google News ou portal especializado/sindical). Id 0 = desconhecida."
     columns:
-      - name: chave_fonte
+      - name: id_fonte
         data_tests: [unique, not_null]
 
   - name: dim_localidade
-    description: "Localidade dos incidentes: município+estado (em terra) ou bacia (offshore), já normalizados. Chave 0 = desconhecida."
+    description: "Município+estado (em terra) ou bacia (offshore), normalizados. Id 0 = desconhecida."
     columns:
-      - name: chave_localidade
+      - name: id_localidade
         data_tests: [unique, not_null]
 
   - name: dim_instalacao
-    description: "Instalações e dutos oficiais da ANP + instalações só do SISO + ativos que só a notícia cita. Chave 0 = desconhecida."
+    description: "Instalações e dutos da ANP + só do SISO + ativos que só a notícia cita. Id 0 = desconhecida. Dois papéis na fato."
     columns:
-      - name: chave_instalacao
+      - name: id_instalacao
         data_tests: [unique, not_null]
 
-  - name: fato_noticia_ia
-    description: "Fato: uma linha por notícia processada pela IA (relevantes, descartadas e duplicatas de título)."
+  - name: dim_empresa
+    description: "Empresas (operadora do contrato, da instalação, empresa do SISO). Três papéis na fato. Id 0 = desconhecida."
     columns:
-      - name: id_noticia
+      - name: id_empresa
         data_tests: [unique, not_null]
-      - name: id_incidente
-        data_tests:
-          - relationships:
-              arguments:
-                to: ref('fato_incidente')
-                field: id_incidente
-      - name: chave_data_publicacao
-        data_tests:
-          - not_null
-          - relationships:
-              arguments:
-                to: ref('dim_data')
-                field: chave_data
-      - name: chave_data_fato
-        data_tests:
-          - not_null
-          - relationships:
-              arguments:
-                to: ref('dim_data')
-                field: chave_data
-      - name: chave_fonte
-        data_tests:
-          - not_null
-          - relationships:
-              arguments:
-                to: ref('dim_fonte')
-                field: chave_fonte
-      - name: chave_localidade
-        data_tests:
-          - not_null
-          - relationships:
-              arguments:
-                to: ref('dim_localidade')
-                field: chave_localidade
-      - name: chave_instalacao
-        data_tests:
-          - not_null
-          - relationships:
-              arguments:
-                to: ref('dim_instalacao')
-                field: chave_instalacao
-      - name: severidade
-        data_tests:
-          - not_null
-          - accepted_values:
-              arguments:
-                values: ["CRÍTICO", "ALTO", "MÉDIO", "INFORMATIVO", "Não Informada"]
+
+  - name: dim_tipo_evento
+    description: "Tipo do evento classificado pela IA. Id 0 = não informado."
+    columns:
+      - name: id_tipo_evento
+        data_tests: [unique, not_null]
+
+  - name: dim_severidade
+    description: "Severidade (CRÍTICO, ALTO, MÉDIO, INFORMATIVO, Não Informada) com coluna de ordem."
+    columns:
+      - name: id_severidade
+        data_tests: [unique, not_null]
+
+  - name: dim_status_cruzamento
+    description: "Resultado do cruzamento do incidente com o SISO."
+    columns:
+      - name: id_status_cruzamento
+        data_tests: [unique, not_null]
 
   - name: fato_incidente
-    description: "Fato: uma linha por incidente (evento físico) aprovado pela IA, já cruzado com o SISO."
+    description: "Única fato. Uma linha por incidente detectado pela IA, cruzado com o SISO quando há correspondência. Medidas: qtd_incidente, vitimas, qtd_noticias_do_evento, confianca, score_cruzamento."
     columns:
       - name: id_incidente
         data_tests: [unique, not_null]
-      - name: chave_data_fato
+      - name: data_fato
+        data_tests: [not_null]
+      - name: data_publicacao
+        data_tests: [not_null]
+      - name: id_data_fato
         data_tests:
           - not_null
           - relationships:
               arguments:
                 to: ref('dim_data')
-                field: chave_data
-      - name: chave_data_publicacao
+                field: id_data
+      - name: id_data_publicacao
         data_tests:
           - not_null
           - relationships:
               arguments:
                 to: ref('dim_data')
-                field: chave_data
-      - name: chave_fonte
+                field: id_data
+      - name: id_data_siso
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_data')
+                field: id_data
+      - name: id_fonte
         data_tests:
           - not_null
           - relationships:
               arguments:
                 to: ref('dim_fonte')
-                field: chave_fonte
-      - name: chave_localidade
+                field: id_fonte
+      - name: id_localidade
         data_tests:
           - not_null
           - relationships:
               arguments:
                 to: ref('dim_localidade')
-                field: chave_localidade
-      - name: chave_instalacao
+                field: id_localidade
+      - name: id_instalacao
         data_tests:
           - not_null
           - relationships:
               arguments:
                 to: ref('dim_instalacao')
-                field: chave_instalacao
-      - name: severidade
-        data_tests:
-          - not_null
-          - accepted_values:
-              arguments:
-                values: ["CRÍTICO", "ALTO", "MÉDIO", "INFORMATIVO", "Não Informada"]
-      - name: status_cruzamento
-        data_tests:
-          - not_null
-          - accepted_values:
-              arguments:
-                values: ["Match Perfeito", "Match por Substring", "Match por Localidade (Fallback)", "Nao Comunicado / Sem Correspondencia"]
-
-  - name: fato_siso_incidente
-    description: "Fato: uma linha por incidente comunicado ao SISO/ANP, com indicação de se a IA já o havia detectado nas notícias."
-    columns:
-      - name: num_incidente
-        data_tests:
-          - not_null
-          - unique:
-              config:
-                severity: warn
-      - name: chave_data_primeira_obs
-        data_tests:
-          - not_null
-          - relationships:
-              arguments:
-                to: ref('dim_data')
-                field: chave_data
-      - name: chave_instalacao
+                field: id_instalacao
+      - name: id_instalacao_siso
         data_tests:
           - not_null
           - relationships:
               arguments:
                 to: ref('dim_instalacao')
-                field: chave_instalacao
+                field: id_instalacao
+      - name: id_empresa_contrato
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_empresa')
+                field: id_empresa
+      - name: id_empresa_instalacao
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_empresa')
+                field: id_empresa
+      - name: id_empresa_siso
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_empresa')
+                field: id_empresa
+      - name: id_tipo_evento
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_tipo_evento')
+                field: id_tipo_evento
+      - name: id_severidade
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_severidade')
+                field: id_severidade
+      - name: id_status_cruzamento
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_status_cruzamento')
+                field: id_status_cruzamento

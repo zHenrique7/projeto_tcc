@@ -14,7 +14,7 @@ with fontes as (
     group by 1
 )
 
-select row_number() over (order by chave_natural)::int as chave_fonte, chave_natural, fonte, tipo_fonte
+select row_number() over (order by chave_natural)::int as id_fonte, chave_natural, fonte, tipo_fonte
 from fontes
 
 union all

@@ -6,5 +6,6 @@ select
     dsc_empresa,
     nom_instalacao,
     dat_primeira_obs,
-    dsc_ende_instalacao
+    dsc_ende_instalacao,
+    dsc_incidente
 from {{ source('raw', 'siso_incidentes') }}

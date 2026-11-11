@@ -10,6 +10,7 @@ select
     nom_instalacao,
     dat_primeira_obs,
     dsc_ende_instalacao,
+    dsc_incidente,
     dat_primeira_obs::date                                   as siso_data,
     {{ limpar_e_desacentuar('nom_instalacao') }}             as siso_nome_limpo,
     {{ limpar_e_desacentuar('dsc_ende_instalacao') }}        as siso_ende_limpo

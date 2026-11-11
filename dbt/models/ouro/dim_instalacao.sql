@@ -58,7 +58,7 @@ todas as (
 )
 
 select
-    row_number() over (order by nome_limpo)::int as chave_instalacao,
+    row_number() over (order by nome_limpo)::int as id_instalacao,
     nome_limpo                                   as chave_natural,
     instalacao,
     sigla,

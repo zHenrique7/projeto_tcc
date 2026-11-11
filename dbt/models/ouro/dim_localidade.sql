@@ -32,7 +32,7 @@ agrupadas as (
 )
 
 select
-    row_number() over (order by chave_natural)::int      as chave_localidade,
+    row_number() over (order by chave_natural)::int      as id_localidade,
     chave_natural,
     coalesce(municipio, 'Não Informado')                 as municipio,
     coalesce(estado, 'Não Informado')                    as estado,

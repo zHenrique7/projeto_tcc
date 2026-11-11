@@ -87,3 +87,15 @@ models:
                   - "Match por Substring"
                   - "Match por Localidade (Fallback)"
                   - "Nao Comunicado / Sem Correspondencia"
+
+  - name: prata_noticias_processadas
+    description: "Uma linha por notícia processada pela IA (relevantes, descartadas e duplicatas), fora da estrela. id_incidente liga ao incidente em ouro.fato_incidente."
+    columns:
+      - name: id_noticia
+        data_tests: [unique, not_null]
+      - name: id_incidente
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fato_incidente')
+                field: id_incidente
