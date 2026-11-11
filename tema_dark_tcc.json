@@ -1,0 +1,121 @@
+{
+  "name": "TCC P&G - Dark Executive",
+  "dataColors": [
+    "#38BDF8",
+    "#F97316",
+    "#EF4444",
+    "#EAB308",
+    "#10B981",
+    "#818CF8",
+    "#EC4899",
+    "#94A3B8"
+  ],
+  "background": "#0F172A",
+  "foreground": "#F8FAFC",
+  "tableAccent": "#0284C7",
+  "visualStyles": {
+    "page": {
+      "*": {
+        "background": [
+          {
+            "color": { "solid": { "color": "#0F172A" } },
+            "transparency": 0
+          }
+        ]
+      }
+    },
+    "*": {
+      "*": {
+        "background": [
+          {
+            "color": { "solid": { "color": "#1E293B" } },
+            "transparency": 0
+          }
+        ],
+        "border": [
+          {
+            "show": true,
+            "color": { "solid": { "color": "#334155" } },
+            "radius": 10
+          }
+        ],
+        "dropShadow": [
+          {
+            "show": true,
+            "color": { "solid": { "color": "#000000" } },
+            "position": "Outer",
+            "preset": "BottomRight"
+          }
+        ],
+        "title": [
+          {
+            "fontColor": { "solid": { "color": "#F8FAFC" } },
+            "fontFamily": "Segoe UI Semibold",
+            "fontSize": 12
+          }
+        ],
+        "labels": [
+          {
+            "color": { "solid": { "color": "#94A3B8" } }
+          }
+        ],
+        "categoryAxis": [
+          {
+            "labelColor": { "solid": { "color": "#94A3B8" } }
+          }
+        ],
+        "valueAxis": [
+          {
+            "labelColor": { "solid": { "color": "#94A3B8" } }
+          }
+        ],
+        "legend": [
+          {
+            "labelColor": { "solid": { "color": "#94A3B8" } }
+          }
+        ]
+      }
+    },
+    "card": {
+      "*": {
+        "labels": [
+          {
+            "color": { "solid": { "color": "#38BDF8" } },
+            "fontFamily": "Segoe UI Bold"
+          }
+        ],
+        "categoryLabels": [
+          {
+            "color": { "solid": { "color": "#94A3B8" } }
+          }
+        ]
+      }
+    },
+    "tableEx": {
+      "*": {
+        "grid": [
+          {
+            "gridVertical": true,
+            "gridVerticalColor": { "solid": { "color": "#334155" } },
+            "gridHorizontal": true,
+            "gridHorizontalColor": { "solid": { "color": "#334155" } }
+          }
+        ],
+        "columnHeaders": [
+          {
+            "fontColor": { "solid": { "color": "#38BDF8" } },
+            "backColor": { "solid": { "color": "#0F172A" } }
+          }
+        ],
+        "values": [
+          {
+            "fontColorPrimary": { "solid": { "color": "#F8FAFC" } },
+            "backColorPrimary": { "solid": { "color": "#1E293B" } },
+            "fontColorSecondary": { "solid": { "color": "#F8FAFC" } },
+            "backColorSecondary": { "solid": { "color": "#162032" } }
+          }
+        ]
+      }
+    }
+  }
+}
